@@ -1,0 +1,14 @@
+body {
+    background: linear-gradient(135deg, #007bff, #ffcc00);
+}
+
+.login-container {
+    width: 350px;
+    background: white;
+    text-align: center;
+}
+
+.logo {
+    width: 100px;
+    height: auto;
+}
