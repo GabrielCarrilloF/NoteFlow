@@ -6,19 +6,19 @@ class User {
         $this->pdo = $pdo;
     }
     
-    // Iniciar sesión: se busca el usuario y se compara la contraseña (texto plano en este ejemplo)
+    // Método de login (ya existente)
     public function login($username, $password) {
         $stmt = $this->pdo->prepare("SELECT ID, Password, User FROM authentication WHERE User = :user LIMIT 1");
         $stmt->bindParam(":user", $username, PDO::PARAM_STR);
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user && $password === $user['Password']) {
+        if ($user && $password === $user['Password']) { // Texto plano para simplificar, pero se recomienda encriptar
             return $user;
         }
         return false;
     }
     
-    // Registro: Inserta en la tabla de autenticación y en la tabla de información del usuario
+    // Método de registro (ya existente)
     public function register($username, $password, $fullName, $email) {
         $stmt = $this->pdo->prepare("INSERT INTO authentication (User, Password) VALUES (:user, :password)");
         $stmt->bindParam(":user", $username);
@@ -32,6 +32,32 @@ class User {
             return $stmt2->execute();
         }
         return false;
+    }
+    
+    // Obtiene el perfil del usuario (información de ambas tablas)
+    public function getProfile($user_id) {
+        $stmt = $this->pdo->prepare("
+            SELECT auth.User, ui.FullName, ui.Email 
+            FROM authentication AS auth 
+            INNER JOIN user_information AS ui ON auth.ID = ui.AuthID 
+            WHERE auth.ID = :user_id
+        ");
+        $stmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    // Actualiza la información del perfil
+    public function updateProfile($user_id, $fullName, $email) {
+        $stmt = $this->pdo->prepare("
+            UPDATE user_information 
+            SET FullName = :fullName, Email = :email 
+            WHERE AuthID = :user_id
+        ");
+        $stmt->bindParam(":fullName", $fullName);
+        $stmt->bindParam(":email", $email);
+        $stmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 }
 ?>
