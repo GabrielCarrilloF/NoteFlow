@@ -1,13 +1,14 @@
 <?php
-$host = "localhost";  // Cambia si tu servidor no es local
+$host = "localhost";
 $dbname = "NoteFlow";
-$username = "root";  // Reemplázalo con tu usuario de MySQL
-$password = "";      // Si tienes contraseña, agrégala aquí
+$username = "root";  // Cambia según tu configuración
+$password = "";      // Cambia según tu configuración
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+} catch(PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
 }
 ?>

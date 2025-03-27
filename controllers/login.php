@@ -1,30 +1,27 @@
 <?php
 session_start();
-require_once "../config/database.php"; // Conexión a la base de datos
+require_once "../config/database.php";
+require_once "../models/User.php";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $user = trim($_POST["username"] ?? "");
-    $password = trim($_POST["password"] ?? "");
-
-    if (!empty($user) && !empty($password)) {
-        $stmt = $pdo->prepare("SELECT ID, Password FROM authentication WHERE User = :user LIMIT 1");
-        $stmt->bindParam(":user", $user, PDO::PARAM_STR);
-        $stmt->execute();
-        $userData = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($userData && $password === $userData["Password"]) {  // Comparación directa
-            $_SESSION["user_id"] = $userData["ID"];
-            $_SESSION["username"] = $user;
-            header("Location: ../views/dashboard.php"); // Redirige al panel
-            exit();
-        } else {
-            $_SESSION["error"] = "Invalid credentials.";
-        }
+if($_SERVER["REQUEST_METHOD"] === "POST"){
+    $username = trim($_POST["username"]);
+    $password = trim($_POST["password"]);
+    
+    $userModel = new User($pdo);
+    $user = $userModel->login($username, $password);
+    
+    if($user){
+        $_SESSION["user_id"] = $user["ID"];
+        $_SESSION["user_name"] = $user["User"];
+        header("Location: ../views/dashboard.php");
+        exit();
     } else {
-        $_SESSION["error"] = "All fields are required.";
+        $_SESSION["error"] = "Invalid credentials.";
+        header("Location: ../index.php");
+        exit();
     }
+} else {
+    header("Location: ../index.php");
+    exit();
 }
-
-header("Location: ../index.php");
-exit();
 ?>
