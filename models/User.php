@@ -59,5 +59,40 @@ class User {
         $stmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
         return $stmt->execute();
     }
+    public function getUserByUsername($username) {
+        $stmt = $this->pdo->prepare("
+            SELECT a.ID, a.User, ui.* 
+            FROM authentication AS a
+            JOIN user_information AS ui ON a.ID = ui.AuthID 
+            WHERE a.User = :username LIMIT 1
+        ");
+        $stmt->bindParam(":username", $username, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    public function verifySecurityAnswer($userId, $answer) {
+        $stmt = $this->pdo->prepare("
+            SELECT security_answer 
+            FROM user_information 
+            WHERE AuthID = :user_id LIMIT 1
+        ");
+        $stmt->bindParam(":user_id", $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return ($data && strtolower(trim($data['security_answer'])) === strtolower(trim($answer)));
+    }
+    
+    public function updatePasswordDirectly($userId, $newPassword) {
+        $stmt = $this->pdo->prepare("
+            UPDATE authentication 
+            SET Password = :password 
+            WHERE ID = :user_id
+        ");
+        $stmt->bindParam(":password", $newPassword, PDO::PARAM_STR);
+        $stmt->bindParam(":user_id", $userId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }
 ?>
