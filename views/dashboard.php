@@ -37,6 +37,23 @@ $firstName = explode(" ", $userName)[0];
         <ul>
           <li class="active"><a href="dashboard.php"><i class="bi bi-check-circle"></i> Mis Tareas</a></li>
           <li><a href="profile.php"><i class="bi bi-person"></i> Perfil</a></li>
+          
+          <!-- Sección de Etiquetas -->
+          <li class="sidebar-section">
+            <div class="section-header">
+              <span>Etiquetas</span>
+              <button class="btn btn-sm btn-link p-0" data-bs-toggle="modal" data-bs-target="#labelModal">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+            <ul class="label-list">
+              <li><a href="#"><span class="label-color" style="background-color: #4285F4;"></span> Trabajo</a></li>
+              <li><a href="#"><span class="label-color" style="background-color: #EA4335;"></span> Personal</a></li>
+              <li><a href="#"><span class="label-color" style="background-color: #FBBC05;"></span> Importante</a></li>
+              <li><a href="#"><span class="label-color" style="background-color: #34A853;"></span> Proyectos</a></li>
+            </ul>
+          </li>
+          
           <li><a href="../controllers/logout.php"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
         </ul>
       </nav>
@@ -82,7 +99,28 @@ $firstName = explode(" ", $userName)[0];
       </div>
 
       <div id="taskList" class="task-list">
-        <!-- Las tareas se cargarán aquí -->
+        <!-- Ejemplo de tarea con etiqueta -->
+        <div class="task-item">
+          <div class="task-checkbox">
+            <input type="checkbox">
+          </div>
+          <div class="task-content">
+            <div class="task-title">
+              Reunión con el equipo
+              <span class="task-label" style="background-color: #4285F4;">Trabajo</span>
+            </div>
+            <div class="task-description">Preparar presentación para la reunión de mañana</div>
+            <div class="task-meta">
+              <span><i class="bi bi-calendar"></i> Hoy, 15:00</span>
+              <span><i class="bi bi-flag"></i> Alta prioridad</span>
+            </div>
+          </div>
+          <div class="task-actions">
+            <button><i class="bi bi-pencil"></i></button>
+            <button><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+        
         <div class="empty-state">
           <i class="bi bi-check2-all"></i>
           <h3>No hay tareas aún</h3>
@@ -117,10 +155,69 @@ $firstName = explode(" ", $userName)[0];
               <option value="high">Alta</option>
             </select>
           </div>
+          <div class="mb-3">
+            <label class="form-label">Etiquetas</label>
+            <div class="label-selector">
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="labelWork" value="work">
+                <label class="form-check-label" for="labelWork">
+                  <span class="label-color" style="background-color: #4285F4;"></span> Trabajo
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="labelPersonal" value="personal">
+                <label class="form-check-label" for="labelPersonal">
+                  <span class="label-color" style="background-color: #EA4335;"></span> Personal
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="labelImportant" value="important">
+                <label class="form-check-label" for="labelImportant">
+                  <span class="label-color" style="background-color: #FBBC05;"></span> Importante
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="button" class="btn btn-primary" onclick="addTask()">Guardar Tarea</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Label Modal -->
+  <div class="modal fade" id="labelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-tag"></i> Nueva Etiqueta</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="labelName" class="form-label">Nombre de la etiqueta</label>
+            <input type="text" id="labelName" class="form-control" placeholder="Ej: Finanzas">
+          </div>
+          <div class="mb-3">
+            <label for="labelColor" class="form-label">Color</label>
+            <div class="color-palette">
+              <input type="color" id="labelColor" value="#4285F4" class="form-control form-control-color">
+              <div class="color-options">
+                <button type="button" class="color-option" style="background-color: #4285F4;" data-color="#4285F4"></button>
+                <button type="button" class="color-option" style="background-color: #EA4335;" data-color="#EA4335"></button>
+                <button type="button" class="color-option" style="background-color: #FBBC05;" data-color="#FBBC05"></button>
+                <button type="button" class="color-option" style="background-color: #34A853;" data-color="#34A853"></button>
+                <button type="button" class="color-option" style="background-color: #673AB7;" data-color="#673AB7"></button>
+                <button type="button" class="color-option" style="background-color: #FF5722;" data-color="#FF5722"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="addLabel()">Crear Etiqueta</button>
         </div>
       </div>
     </div>
