@@ -57,11 +57,6 @@ $firstName = explode(" ", $userName)[0];
           <li><a href="../controllers/logout.php"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
         </ul>
       </nav>
-      <div class="sidebar-footer">
-        <button class="btn btn-primary new-task-btn" data-bs-toggle="modal" data-bs-target="#taskModal">
-          <i class="bi bi-plus-lg"></i> Nueva Tarea
-        </button>
-      </div>
     </aside>
 
     <!-- Main Content -->
@@ -74,11 +69,11 @@ $firstName = explode(" ", $userName)[0];
             <input type="text" placeholder="Buscar tareas...">
           </div>
           <div class="filter-dropdown">
-            <select class="form-select">
-              <option>Todas</option>
-              <option>Pendientes</option>
-              <option>Completadas</option>
-            </select>
+          <div class="sidebar-footer">
+        <button class="btn btn-primary new-task-btn" data-bs-toggle="modal" data-bs-target="#taskModal">
+          <i class="bi bi-plus-lg"></i> Nueva Tarea
+        </button>
+      </div>
           </div>
         </div>
       </header>
@@ -98,28 +93,42 @@ $firstName = explode(" ", $userName)[0];
         </div>
       </div>
 
-      <div id="taskList" class="task-list">
-        <!-- Ejemplo de tarea con etiqueta -->
-        <div class="task-item">
-          <div class="task-checkbox">
-            <input type="checkbox">
-          </div>
-          <div class="task-content">
-            <div class="task-title">
-              Reunión con el equipo
-              <span class="task-label" style="background-color: #4285F4;">Trabajo</span>
-            </div>
-            <div class="task-description">Preparar presentación para la reunión de mañana</div>
-            <div class="task-meta">
-              <span><i class="bi bi-calendar"></i> Hoy, 15:00</span>
-              <span><i class="bi bi-flag"></i> Alta prioridad</span>
-            </div>
-          </div>
-          <div class="task-actions">
-            <button><i class="bi bi-pencil"></i></button>
-            <button><i class="bi bi-trash"></i></button>
-          </div>
-        </div>
+      <!-- Reemplaza el div taskList en tu dashboard.php con esto: -->
+<div id="taskList" class="task-list">
+  <!-- Sección de Notas Recientes -->
+  <div class="notes-section">
+    <h4 class="section-title">
+      <i class="bi bi-clock"></i> Recientes
+      <span class="badge bg-primary rounded-pill" id="recentCount">0</span>
+    </h4>
+    <div class="notes-container" id="recentNotes"></div>
+  </div>
+  
+  <!-- Sección de Notas Importantes -->
+  <div class="notes-section">
+    <h4 class="section-title">
+      <i class="bi bi-star"></i> Importantes
+      <span class="badge bg-warning rounded-pill" id="importantCount">0</span>
+    </h4>
+    <div class="notes-container" id="importantNotes"></div>
+  </div>
+  
+  <!-- Sección de Notas por Etiquetas -->
+  <div class="notes-section">
+    <h4 class="section-title">
+      <i class="bi bi-tag"></i> Por Etiquetas
+    </h4>
+    <div class="label-filter">
+      <button class="btn btn-sm btn-outline-primary active">Todas</button>
+      <button class="btn btn-sm btn-outline-primary">Trabajo</button>
+      <button class="btn btn-sm btn-outline-primary">Personal</button>
+      <button class="btn btn-sm btn-outline-primary">Estudio</button>
+    </div>
+    <div class="notes-container" id="labeledNotes"></div>
+  </div>
+  
+  
+</div>
         
         <div class="empty-state">
           <i class="bi bi-check2-all"></i>

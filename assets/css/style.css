@@ -135,6 +135,19 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.new-task-btn:hover {
+  background-color: var(--secondary-color);
+  transform: translateY(-2px);
+}
+
+.new-task-btn i {
+  font-size: 1.1rem;
 }
 
 /* Content Header */
@@ -152,11 +165,13 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  margin: 0;
 }
 
 .header-actions {
   display: flex;
   gap: 1rem;
+  align-items: center;
 }
 
 .search-box {
@@ -187,12 +202,16 @@ body {
   outline: none;
 }
 
+.filter-dropdown {
+  min-width: 150px;
+}
+
 .filter-dropdown select {
   height: 40px;
   border-radius: var(--border-radius);
   border: 1px solid #e2e8f0;
   padding: 0 1rem;
-  min-width: 150px;
+  width: 100%;
 }
 
 /* Task Stats */
@@ -209,6 +228,12 @@ body {
   flex: 1;
   box-shadow: var(--box-shadow);
   text-align: center;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card h3 {
@@ -221,6 +246,7 @@ body {
 .stat-card p {
   color: #64748b;
   margin-bottom: 0;
+  font-size: 0.9rem;
 }
 
 /* Task List */
@@ -235,6 +261,7 @@ body {
   text-align: center;
   padding: 3rem 0;
   color: #94a3b8;
+  display: none; /* Oculto por defecto, se muestra con JS cuando no hay notas */
 }
 
 .empty-state i {
@@ -252,84 +279,108 @@ body {
   margin-bottom: 0;
 }
 
-/* Task Item (you'll need to style dynamically created tasks) */
-.task-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 1.25rem;
-  border-radius: var(--border-radius);
-  background: white;
-  margin-bottom: 1rem;
-  border-left: 4px solid #e2e8f0;
-  transition: all 0.2s ease;
+/* Organización de notas */
+.notes-section {
+  margin-bottom: 2rem;
 }
 
-.task-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-.task-item.completed {
-  opacity: 0.7;
-  border-left-color: var(--success-color);
-}
-
-.task-item.high-priority {
-  border-left-color: var(--danger-color);
-}
-
-.task-item.medium-priority {
-  border-left-color: var(--warning-color);
-}
-
-.task-item.low-priority {
-  border-left-color: var(--success-color);
-}
-
-.task-checkbox {
-  margin-right: 1rem;
-  margin-top: 0.25rem;
-}
-
-.task-content {
-  flex: 1;
-}
-
-.task-title {
+.section-title {
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  color: var(--dark-color);
+  margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.task-description {
-  color: #64748b;
-  margin-bottom: 0.5rem;
-}
-
-.task-meta {
-  display: flex;
+.notes-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
-  font-size: 0.85rem;
+}
+
+.note-card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 1.25rem;
+  box-shadow: var(--box-shadow);
+  transition: all 0.2s ease;
+  border-left: 3px solid var(--primary-color);
+}
+
+.note-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.note-card.important {
+  border-left-color: var(--danger-color);
+}
+
+.note-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.note-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--dark-color);
+}
+
+.note-date {
+  font-size: 0.75rem;
   color: #94a3b8;
 }
 
-.task-actions {
+.note-content {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.note-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.note-label {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+  background-color: var(--primary-color);
+}
+
+.label-filter {
   display: flex;
   gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
-.task-actions button {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.label-filter .btn {
+  border-radius: 1rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
 }
 
-.task-actions button:hover {
-  color: var(--primary-color);
+.label-filter .btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
 }
 
 /* Modal Customization */
@@ -341,11 +392,25 @@ body {
 
 .modal-header {
   border-bottom: 1px solid #e2e8f0;
+  padding: 1.25rem;
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 1.25rem;
 }
 
 .modal-footer {
   border-top: 1px solid #e2e8f0;
+  padding: 1rem 1.25rem;
 }
+
 /* Sección de etiquetas en el sidebar */
 .sidebar-section {
   margin: 1.5rem 0;
@@ -361,10 +426,6 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.section-header button {
-  font-size: 0.9rem;
 }
 
 .label-list {
@@ -394,36 +455,6 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  margin-right: 8px;
-}
-
-/* Etiquetas en las tareas */
-.task-label {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: white;
-  margin-left: 0.75rem;
-  vertical-align: middle;
-}
-
-/* Selector de etiquetas en el modal */
-.label-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.form-check-inline {
-  margin-right: 0;
-}
-
-.form-check-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 /* Paleta de colores */
@@ -461,6 +492,7 @@ body {
   height: 50px;
   padding: 2px;
 }
+
 /* Responsive Adjustments */
 @media (max-width: 992px) {
   .dashboard-sidebar {
@@ -501,11 +533,15 @@ body {
     gap: 1rem;
   }
   
-  .search-box {
+  .search-box, .filter-dropdown {
     width: 100%;
   }
   
   .task-stats {
     flex-direction: column;
+  }
+  
+  .notes-container {
+    grid-template-columns: 1fr;
   }
 }
