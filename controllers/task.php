@@ -18,27 +18,32 @@ if($method === "GET"){
     echo json_encode($tasks);
     exit();
 } elseif($method === "POST"){
-    $title = trim($_POST["title"]);
-    $content = trim($_POST["content"]);
+    $data = json_decode(file_get_contents('php://input'), true);
+    $title = trim($data["title"]);
+    $content = trim($data["content"]);
+    
     if(empty($title) || empty($content)){
         echo json_encode(["error" => "All fields are required"]);
         exit();
     }
+    
     $result = $taskModel->addTask($userId, $title, $content);
     echo json_encode(["success" => $result]);
     exit();
 } elseif($method === "PUT"){
-    parse_str(file_get_contents("php://input"), $_PUT);
-    $taskId = $_PUT["taskId"];
-    $title = trim($_PUT["title"]);
-    $content = trim($_PUT["content"]);
-    $result = $taskModel->updateTask($taskId, $userId, $title, $content);
+    parse_str(file_get_contents("php://input"), $data);
+    $noteId = $data["noteId"];
+    $title = trim($data["title"]);
+    $content = trim($data["content"]);
+    
+    $result = $taskModel->updateTask($noteId, $userId, $title, $content);
     echo json_encode(["success" => $result]);
     exit();
 } elseif($method === "DELETE"){
-    parse_str(file_get_contents("php://input"), $_DELETE);
-    $taskId = $_DELETE["taskId"];
-    $result = $taskModel->deleteTask($taskId, $userId);
+    parse_str(file_get_contents("php://input"), $data);
+    $noteId = $data["noteId"];
+    
+    $result = $taskModel->deleteTask($noteId, $userId);
     echo json_encode(["success" => $result]);
     exit();
 } else {

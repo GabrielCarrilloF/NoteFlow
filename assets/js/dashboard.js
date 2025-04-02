@@ -1,343 +1,491 @@
-document.addEventListener("DOMContentLoaded", function() {
-  // Cargar datos iniciales
-  loadTasks();
-  loadLabels();
-  
-  // Evento de búsqueda
-  document.querySelector('.search-box input').addEventListener('input', function(e) {
-      searchTasks(e.target.value);
-  });
-  
-  // Eventos de filtrado por etiquetas
-  document.querySelectorAll('.label-filter button').forEach(btn => {
-      btn.addEventListener('click', function() {
-          filterByLabel(this.textContent.trim());
-      });
-  });
-});
+// Variables globales
+let allTasks = [];
+let allLabels = [];
+let currentUserId = <?php echo $_SESSION["user_id"]; ?>;
 
-// Cargar tareas organizadas por secciones
+// Funciones principales
 function loadTasks() {
-  fetch("../controllers/task.php")
-      .then(response => response.json())
-      .then(tasks => {
-          updateTaskStats(tasks);
-          renderTasks(tasks);
-      })
-      .catch(error => {
-          console.error("Error loading tasks:", error);
-          showError("Error al cargar tareas");
-      });
+    showLoading();
+    fetch("../controllers/task.php")
+        .then(response => response.json())
+        .then(tasks => {
+            allTasks = tasks;
+            updateTaskStats(tasks);
+            renderAllTasks(tasks);
+            renderRecentTasks(tasks);
+            hideLoading();
+        })
+        .catch(error => {
+            console.error("Error loading tasks:", error);
+            showError("Error al cargar tareas");
+            hideLoading();
+        });
 }
 
-// Cargar etiquetas del usuario
 function loadLabels() {
-  // Simulación - reemplazar con tu endpoint real
-  const labels = [
-      { name: "Trabajo", color: "#4285F4" },
-      { name: "Personal", color: "#EA4335" },
-      { name: "Importante", color: "#FBBC05" },
-      { name: "Proyectos", color: "#34A853" }
-  ];
-  
-  renderLabels(labels);
+    fetch("../controllers/label.php")
+        .then(response => response.json())
+        .then(labels => {
+            allLabels = labels;
+            renderSidebarLabels(labels);
+            renderLabelFilter(labels);
+            renderLabelOptions(labels);
+        })
+        .catch(error => {
+            console.error("Error loading labels:", error);
+            showError("Error al cargar etiquetas");
+        });
 }
 
-// Mostrar etiquetas en el sidebar
-function renderLabels(labels) {
-  const labelList = document.querySelector('.label-list');
-  labelList.innerHTML = labels.map(label => `
-      <li>
-          <a href="#" data-label="${label.name}">
-              <span class="label-color" style="background-color: ${label.color}"></span>
-              ${label.name}
-          </a>
-      </li>
-  `).join('');
-  
-  // Eventos para filtrar desde el sidebar
-  labelList.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', function(e) {
-          e.preventDefault();
-          filterByLabel(this.dataset.label);
-      });
-  });
+// Renderizado
+function renderAllTasks(tasks) {
+    const container = document.getElementById('allTasks');
+    
+    if (tasks.length === 0) {
+        showEmptyState();
+        return;
+    }
+    
+    hideEmptyState();
+    container.innerHTML = tasks.map(task => createTaskCard(task)).join('');
+    document.getElementById('totalTasksBadge').textContent = tasks.length;
 }
 
-// Actualizar contadores de estadísticas
-function updateTaskStats(tasks) {
-  const total = tasks.length;
-  const completed = tasks.filter(task => task.Status === 'completed').length;
-  
-  document.getElementById('totalTasks').textContent = total;
-  document.getElementById('completedTasks').textContent = completed;
-  document.getElementById('pendingTasks').textContent = total - completed;
+function renderRecentTasks(tasks) {
+    const container = document.getElementById('recentTasks');
+    const recentTasks = tasks.slice(0, 5);
+    
+    document.getElementById('recentCount').textContent = recentTasks.length;
+    
+    if (recentTasks.length === 0) {
+        container.innerHTML = `<div class="col-12"><p class="text-muted">No hay tareas recientes</p></div>`;
+        return;
+    }
+    
+    container.innerHTML = recentTasks.map(task => createTaskCard(task, false)).join('');
 }
 
-// Renderizar tareas en las 3 secciones
-function renderTasks(tasks) {
-  if (tasks.length === 0) {
-      showEmptyState();
-      return;
-  }
-  
-  hideEmptyState();
-  
-  // Sección Recientes (últimas 5)
-  const recentTasks = tasks.slice(0, 5);
-  renderSection('recentNotes', recentTasks, 'recentCount');
-  
-  // Sección Importantes (prioridad alta)
-  const importantTasks = tasks.filter(task => task.Priority === 'high');
-  renderSection('importantNotes', importantTasks, 'importantCount');
-  
-  // Sección Por Etiquetas (todas)
-  renderSection('labeledNotes', tasks);
+function createTaskCard(task, showActions = true) {
+    return `
+        <div class="col-md-6 col-lg-4">
+            <div class="note-card card mb-3" data-id="${task.NoteID}" data-label-id="${task.labels_id || ''}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="note-title card-title mb-0">${task.Title}</h5>
+                        <span class="note-date text-muted small">${formatDate(task.CreatedAt)}</span>
+                    </div>
+                    <div class="note-content card-text mb-3">${task.Content}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        ${task.labels_id ? `
+                            <span class="note-label badge" style="background-color: ${getLabelColor(task.labels_id)}">
+                                ${getLabelName(task.labels_id)}
+                            </span>
+                        ` : '<span class="note-label badge bg-secondary">Sin etiqueta</span>'}
+                        ${showActions ? `
+                            <div class="note-actions">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editTask(${task.NoteID})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteTask(${task.NoteID})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
-// Renderizar una sección específica
-function renderSection(containerId, tasks, counterId = null) {
-  const container = document.getElementById(containerId);
-  
-  if (counterId) {
-      document.getElementById(counterId).textContent = tasks.length;
-  }
-  
-  if (tasks.length === 0) {
-      container.innerHTML = `<p class="text-muted">No hay tareas en esta sección</p>`;
-      return;
-  }
-  
-  container.innerHTML = tasks.map(task => `
-      <div class="note-card ${task.Priority === 'high' ? 'important' : ''}">
-          <div class="note-card-header">
-              <h5 class="note-title">${task.Title}</h5>
-              <span class="note-date">${formatDate(task.CreatedAt)}</span>
-          </div>
-          <div class="note-content">${task.Content}</div>
-          <div class="note-footer">
-              <span class="note-label" style="background-color: ${getLabelColor(task.Label)}">
-                  ${task.Label || 'General'}
-              </span>
-              <div>
-                  <button class="btn btn-sm btn-outline-secondary" onclick="editTask(${task.NoteID})">
-                      <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${task.NoteID})">
-                      <i class="bi bi-trash"></i>
-                  </button>
-              </div>
-          </div>
-      </div>
-  `).join('');
+function renderSidebarLabels(labels) {
+    const container = document.getElementById('sidebarLabels');
+    container.innerHTML = labels.map(label => `
+        <li class="position-relative">
+            <a href="#" class="d-block py-2 px-3 text-decoration-none text-white" 
+               data-id="${label.ID}" 
+               onclick="filterByLabel(${label.ID})"
+               style="border-left: 3px solid ${label.color}">
+                ${label.name}
+                ${label.is_global ? '<i class="bi bi-globe ms-1" title="Etiqueta global"></i>' : ''}
+                ${!label.is_global ? `
+                    <div class="label-actions">
+                        <button class="btn btn-sm btn-link p-0 text-white" 
+                                onclick="editLabel(event, ${label.ID}, '${label.name}', '${label.color}', ${label.is_global})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                ` : ''}
+            </a>
+        </li>
+    `).join('');
 }
 
-// Mostrar estado vacío
-function showEmptyState() {
-  document.querySelectorAll('.empty-state').forEach(el => {
-      el.style.display = 'block';
-  });
-  document.querySelectorAll('.notes-section').forEach(el => {
-      el.style.display = 'none';
-  });
+function renderLabelFilter(labels) {
+    const container = document.getElementById('labelFilter');
+    container.innerHTML = `
+        <button class="btn btn-sm btn-outline-primary active" data-label-id="all">Todas</button>
+        ${labels.map(label => `
+            <button class="btn btn-sm btn-outline-primary" data-label-id="${label.ID}">
+                <span class="label-color me-1" style="background-color: ${label.color}"></span>
+                ${label.name}
+            </button>
+        `).join('')}
+    `;
+    
+    container.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#labelFilter button').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const labelId = this.dataset.labelId;
+            filterByLabel(labelId === 'all' ? null : labelId);
+        });
+    });
 }
 
-// Ocultar estado vacío
-function hideEmptyState() {
-  document.querySelectorAll('.empty-state').forEach(el => {
-      el.style.display = 'none';
-  });
-  document.querySelectorAll('.notes-section').forEach(el => {
-      el.style.display = 'block';
-  });
+function renderLabelOptions(labels) {
+    const select = document.getElementById('taskLabel');
+    select.innerHTML = `
+        <option value="">Sin etiqueta</option>
+        ${labels.map(label => `
+            <option value="${label.ID}" data-color="${label.color}">
+                ${label.name} ${label.is_global ? '(Global)' : ''}
+            </option>
+        `).join('')}
+    `;
 }
 
-// Función para agregar nueva tarea (mejorada)
-function addTask() {
-  const title = document.getElementById('taskTitle').value.trim();
-  const content = document.getElementById('taskContent').value.trim();
-  const priority = document.getElementById('taskPriority').value;
-  
-  // Obtener etiquetas seleccionadas
-  const selectedLabels = [];
-  document.querySelectorAll('.label-selector input[type="checkbox"]:checked').forEach(checkbox => {
-      selectedLabels.push(checkbox.value);
-  });
-  
-  if (!title) {
-      Swal.fire('Error', 'El título es obligatorio', 'error');
-      return;
-  }
-  
-  const taskData = {
-      title: title,
-      content: content,
-      priority: priority,
-      labels: selectedLabels
-  };
-  
-  fetch("../controllers/task.php", {
-      method: "POST",
-      headers: {
-          "Content-Type": "application/json",
-      },
-      body: JSON.stringify(taskData)
-  })
-  .then(response => response.json())
-  .then(data => {
-      if (data.success) {
-          Swal.fire('Éxito', 'Tarea creada correctamente', 'success');
-          document.getElementById('taskTitle').value = '';
-          document.getElementById('taskContent').value = '';
-          bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
-          loadTasks();
-      } else {
-          Swal.fire('Error', data.message || 'Error al crear tarea', 'error');
-      }
-  })
-  .catch(error => {
-      Swal.fire('Error', 'Error de conexión', 'error');
-  });
+// Funciones de filtrado y búsqueda
+function filterByLabel(labelId) {
+    const container = document.getElementById('labeledTasks');
+    
+    if (!labelId) {
+        container.innerHTML = allTasks.map(task => createTaskCard(task)).join('');
+        return;
+    }
+    
+    const filteredTasks = allTasks.filter(task => task.labels_id == labelId);
+    
+    if (filteredTasks.length === 0) {
+        container.innerHTML = `<div class="col-12"><p class="text-muted">No hay tareas con esta etiqueta</p></div>`;
+        return;
+    }
+    
+    container.innerHTML = filteredTasks.map(task => createTaskCard(task)).join('');
 }
 
-// Función para editar tarea (mejorada)
-function editTask(taskId) {
-  // Obtener datos actuales de la tarea (simulado)
-  const currentTask = {
-      title: "Tarea de ejemplo",
-      content: "Contenido de ejemplo",
-      priority: "medium",
-      label: "Trabajo"
-  };
-  
-  Swal.fire({
-      title: 'Editar Tarea',
-      html: `
-          <input id="editTitle" class="swal2-input" value="${currentTask.title}" placeholder="Título">
-          <textarea id="editContent" class="swal2-textarea" placeholder="Descripción">${currentTask.content}</textarea>
-          <select id="editPriority" class="swal2-select">
-              <option value="low" ${currentTask.priority === 'low' ? 'selected' : ''}>Baja</option>
-              <option value="medium" ${currentTask.priority === 'medium' ? 'selected' : ''}>Media</option>
-              <option value="high" ${currentTask.priority === 'high' ? 'selected' : ''}>Alta</option>
-          </select>
-      `,
-      focusConfirm: false,
-      preConfirm: () => {
-          return {
-              title: document.getElementById('editTitle').value.trim(),
-              content: document.getElementById('editContent').value.trim(),
-              priority: document.getElementById('editPriority').value
-          };
-      }
-  }).then((result) => {
-      if (result.isConfirmed) {
-          const { title, content, priority } = result.value;
-          
-          if (!title) {
-              Swal.fire('Error', 'El título es obligatorio', 'error');
-              return;
-          }
-          
-          fetch(`../controllers/task.php?taskId=${taskId}`, {
-              method: "PUT",
-              headers: {
-                  "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ title, content, priority })
-          })
-          .then(response => response.json())
-          .then(data => {
-              if (data.success) {
-                  Swal.fire('Éxito', 'Tarea actualizada', 'success');
-                  loadTasks();
-              } else {
-                  Swal.fire('Error', 'Error al actualizar', 'error');
-              }
-          });
-      }
-  });
-}
-
-// Función para eliminar tarea (mejorada)
-function deleteTask(taskId) {
-  Swal.fire({
-      title: '¿Eliminar tarea?',
-      text: "Esta acción no se puede deshacer",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
-  }).then((result) => {
-      if (result.isConfirmed) {
-          fetch(`../controllers/task.php?taskId=${taskId}`, {
-              method: "DELETE"
-          })
-          .then(response => response.json())
-          .then(data => {
-              if (data.success) {
-                  Swal.fire('Eliminada', 'La tarea ha sido eliminada', 'success');
-                  loadTasks();
-              } else {
-                  Swal.fire('Error', 'No se pudo eliminar', 'error');
-              }
-          });
-      }
-  });
-}
-
-// Filtrar por etiqueta
-function filterByLabel(label) {
-  if (label === 'Todas') {
-      document.querySelectorAll('.note-card').forEach(card => {
-          card.style.display = 'block';
-      });
-      document.querySelectorAll('.label-filter button').forEach(btn => {
-          btn.classList.remove('active');
-      });
-      document.querySelector('.label-filter button:first-child').classList.add('active');
-      return;
-  }
-  
-  document.querySelectorAll('.note-card').forEach(card => {
-      const cardLabel = card.querySelector('.note-label').textContent;
-      card.style.display = cardLabel === label ? 'block' : 'none';
-  });
-  
-  // Actualizar botones activos
-  document.querySelectorAll('.label-filter button').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent.trim() === label);
-  });
-}
-
-// Buscar tareas
 function searchTasks(query) {
-  const searchTerm = query.toLowerCase();
-  
-  document.querySelectorAll('.note-card').forEach(card => {
-      const title = card.querySelector('.note-title').textContent.toLowerCase();
-      const content = card.querySelector('.note-content').textContent.toLowerCase();
-      card.style.display = (title.includes(searchTerm) || content.includes(searchTerm)) ? 'block' : 'none';
-  });
+    const searchTerm = query.toLowerCase();
+    const container = document.getElementById('allTasks');
+    
+    if (!searchTerm) {
+        renderAllTasks(allTasks);
+        return;
+    }
+    
+    const filteredTasks = allTasks.filter(task => 
+        task.Title.toLowerCase().includes(searchTerm) || 
+        task.Content.toLowerCase().includes(searchTerm)
+    );
+    
+    if (filteredTasks.length === 0) {
+        container.innerHTML = `<div class="col-12"><p class="text-muted">No se encontraron tareas</p></div>`;
+        return;
+    }
+    
+    container.innerHTML = filteredTasks.map(task => createTaskCard(task)).join('');
+}
+
+// Funciones para tareas
+function saveTask() {
+    const id = document.getElementById('taskId').value;
+    const title = document.getElementById('taskTitle').value.trim();
+    const content = document.getElementById('taskContent').value.trim();
+    const labelId = document.getElementById('taskLabel').value || null;
+    
+    if (!title || !content) {
+        showError('Todos los campos son obligatorios');
+        return;
+    }
+    
+    showLoading();
+    const url = "../controllers/task.php";
+    const method = id ? "PUT" : "POST";
+    const body = id 
+        ? `noteId=${id}&title=${encodeURIComponent(title)}&content=${encodeURIComponent(content)}&labelId=${labelId || ''}`
+        : JSON.stringify({title, content, labelId});
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            "Content-Type": id ? "application/x-www-form-urlencoded" : "application/json",
+        },
+        body: body
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess(id ? 'Tarea actualizada' : 'Tarea creada');
+            loadTasks();
+            bootstrap.Modal.getInstance(document.getElementById('taskModal')).hide();
+        } else {
+            showError(data.error || 'Error al guardar la tarea');
+        }
+    })
+    .catch(error => {
+        showError('Error de conexión');
+    })
+    .finally(() => hideLoading());
+}
+
+function editTask(taskId) {
+    const task = allTasks.find(t => t.NoteID == taskId);
+    if (task) {
+        document.getElementById('taskId').value = task.NoteID;
+        document.getElementById('taskTitle').value = task.Title;
+        document.getElementById('taskContent').value = task.Content;
+        document.getElementById('taskLabel').value = task.labels_id || '';
+        document.getElementById('taskModalTitle').textContent = 'Editar Tarea';
+        document.getElementById('btnDeleteTask').style.display = 'block';
+        
+        const modal = new bootstrap.Modal(document.getElementById('taskModal'));
+        modal.show();
+    }
+}
+
+function deleteTask(taskId) {
+    confirmAction(
+        '¿Eliminar tarea?', 
+        '¿Estás seguro de que quieres eliminar esta tarea? Esta acción no se puede deshacer.',
+        () => {
+            showLoading();
+            fetch("../controllers/task.php", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `noteId=${taskId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess('Tarea eliminada');
+                    loadTasks();
+                } else {
+                    showError('No se pudo eliminar la tarea');
+                }
+            })
+            .catch(error => {
+                showError('Error de conexión');
+            })
+            .finally(() => hideLoading());
+        }
+    );
+}
+
+// Funciones para etiquetas
+function saveLabel() {
+    const id = document.getElementById('labelId').value;
+    const name = document.getElementById('labelName').value.trim();
+    const color = document.getElementById('labelColor').value;
+    const isGlobal = document.getElementById('labelGlobal').checked;
+    
+    if (!name) {
+        showError('El nombre de la etiqueta es obligatorio');
+        return;
+    }
+    
+    showLoading();
+    const url = "../controllers/label.php";
+    const method = id ? "PUT" : "POST";
+    const body = id 
+        ? `id=${id}&name=${encodeURIComponent(name)}&color=${color}`
+        : JSON.stringify({name, color, isGlobal});
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            "Content-Type": id ? "application/x-www-form-urlencoded" : "application/json",
+        },
+        body: body
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess(id ? 'Etiqueta actualizada' : 'Etiqueta creada');
+            loadLabels();
+            bootstrap.Modal.getInstance(document.getElementById('labelModal')).hide();
+        } else {
+            showError(data.error || 'Error al guardar la etiqueta');
+        }
+    })
+    .catch(error => {
+        showError('Error de conexión');
+    })
+    .finally(() => hideLoading());
+}
+
+function editLabel(event, id, name, color, isGlobal) {
+    event.stopPropagation();
+    document.getElementById('labelId').value = id;
+    document.getElementById('labelName').value = name;
+    document.getElementById('labelColor').value = color;
+    document.getElementById('labelGlobal').checked = isGlobal;
+    document.getElementById('labelModalTitle').textContent = 'Editar Etiqueta';
+    document.getElementById('btnDeleteLabel').style.display = 'block';
+    document.getElementById('labelGlobal').disabled = isGlobal;
+    
+    const modal = new bootstrap.Modal(document.getElementById('labelModal'));
+    modal.show();
+}
+
+function deleteLabel(labelId) {
+    confirmAction(
+        '¿Eliminar etiqueta?', 
+        '¿Estás seguro de que quieres eliminar esta etiqueta?<br><small>Las tareas asociadas no se eliminarán, pero perderán esta etiqueta.</small>',
+        () => {
+            showLoading();
+            fetch("../controllers/label.php", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `id=${labelId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess('Etiqueta eliminada');
+                    loadLabels();
+                    loadTasks();
+                    bootstrap.Modal.getInstance(document.getElementById('labelModal')).hide();
+                } else {
+                    showError('No se pudo eliminar la etiqueta');
+                }
+            })
+            .catch(error => {
+                showError('Error de conexión');
+            })
+            .finally(() => hideLoading());
+        }
+    );
 }
 
 // Funciones auxiliares
-function formatDate(dateString) {
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('es-ES', options);
+function updateTaskStats(tasks) {
+    document.getElementById('totalTasks').textContent = tasks.length;
+    document.getElementById('pendingTasks').textContent = tasks.length; // Actualizar según lógica de estado
+    document.getElementById('completedTasks').textContent = 0; // Actualizar según lógica de estado
 }
 
-function getLabelColor(labelName) {
-  const colors = {
-      'Trabajo': '#4285F4',
-      'Personal': '#EA4335',
-      'Importante': '#FBBC05',
-      'Proyectos': '#34A853'
-  };
-  return colors[labelName] || '#6c757d';
+function getLabelName(labelId) {
+    const label = allLabels.find(l => l.ID == labelId);
+    return label ? label.name : '';
+}
+
+function getLabelColor(labelId) {
+    const label = allLabels.find(l => l.ID == labelId);
+    return label ? label.color : '#6c757d';
+}
+
+function formatDate(dateString) {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('es-ES', options);
+}
+
+function showEmptyState() {
+    document.querySelector('.empty-state').style.display = 'flex';
+    document.getElementById('taskList').style.display = 'none';
+}
+
+function hideEmptyState() {
+    document.querySelector('.empty-state').style.display = 'none';
+    document.getElementById('taskList').style.display = 'block';
+}
+
+function showLoading() {
+    Swal.fire({
+        title: 'Cargando...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+}
+
+function hideLoading() {
+    Swal.close();
+}
+
+function showSuccess(message) {
+    Swal.fire({
+        title: 'Éxito',
+        text: message,
+        icon: 'success',
+        confirmButtonText: 'Aceptar'
+    });
 }
 
 function showError(message) {
-  Swal.fire('Error', message, 'error');
+    Swal.fire({
+        title: 'Error',
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
+    });
 }
+
+function confirmAction(title, html, callback) {
+    Swal.fire({
+        title: title,
+        html: html,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            callback();
+        }
+    });
+}
+
+// Inicialización
+document.addEventListener("DOMContentLoaded", function() {
+    loadTasks();
+    loadLabels();
+    
+    // Evento de búsqueda
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        searchTasks(e.target.value);
+    });
+    
+    // Eventos para los colores predefinidos
+    document.querySelectorAll('.color-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.getElementById('labelColor').value = this.dataset.color;
+        });
+    });
+    
+    // Reset modales al cerrarse
+    document.getElementById('labelModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('labelId').value = '';
+        document.getElementById('labelName').value = '';
+        document.getElementById('labelColor').value = '#FBBC05';
+        document.getElementById('labelGlobal').checked = false;
+        document.getElementById('labelGlobal').disabled = false;
+        document.getElementById('btnDeleteLabel').style.display = 'none';
+        document.getElementById('labelModalTitle').textContent = 'Nueva Etiqueta';
+    });
+    
+    document.getElementById('taskModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('taskId').value = '';
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskContent').value = '';
+        document.getElementById('taskLabel').value = '';
+        document.getElementById('btnDeleteTask').style.display = 'none';
+        document.getElementById('taskModalTitle').textContent = 'Nueva Tarea';
+    });
+});
