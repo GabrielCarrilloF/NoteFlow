@@ -21,22 +21,24 @@ if($method === "GET"){
     $data = json_decode(file_get_contents('php://input'), true);
     $title = trim($data["title"]);
     $content = trim($data["content"]);
+    $labelId = isset($data["labelId"]) ? $data["labelId"] : null;
     
     if(empty($title) || empty($content)){
         echo json_encode(["error" => "All fields are required"]);
         exit();
     }
     
-    $result = $taskModel->addTask($userId, $title, $content);
+    $result = $taskModel->addTask($userId, $title, $content, $labelId);
     echo json_encode(["success" => $result]);
     exit();
 } elseif($method === "PUT"){
-    parse_str(file_get_contents("php://input"), $data);
+    $data = json_decode(file_get_contents('php://input'), true);
     $noteId = $data["noteId"];
     $title = trim($data["title"]);
     $content = trim($data["content"]);
+    $labelId = isset($data["labelId"]) ? $data["labelId"] : null;
     
-    $result = $taskModel->updateTask($noteId, $userId, $title, $content);
+    $result = $taskModel->updateTask($noteId, $userId, $title, $content, $labelId);
     echo json_encode(["success" => $result]);
     exit();
 } elseif($method === "DELETE"){

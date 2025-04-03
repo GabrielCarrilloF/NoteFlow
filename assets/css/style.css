@@ -1,3 +1,4 @@
+/* Estilos generales */
 :root {
   --primary-color: #4361ee;
   --primary-light: #e0e7ff;
@@ -11,7 +12,6 @@
   --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Base Styles */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f5f7fb;
@@ -146,10 +146,6 @@ body {
   transform: translateY(-2px);
 }
 
-.new-task-btn i {
-  font-size: 1.1rem;
-}
-
 /* Content Header */
 .content-header {
   display: flex;
@@ -202,18 +198,6 @@ body {
   outline: none;
 }
 
-.filter-dropdown {
-  min-width: 150px;
-}
-
-.filter-dropdown select {
-  height: 40px;
-  border-radius: var(--border-radius);
-  border: 1px solid #e2e8f0;
-  padding: 0 1rem;
-  width: 100%;
-}
-
 /* Task Stats */
 .task-stats {
   display: flex;
@@ -261,7 +245,7 @@ body {
   text-align: center;
   padding: 3rem 0;
   color: #94a3b8;
-  display: none; /* Oculto por defecto, se muestra con JS cuando no hay notas */
+  display: none;
 }
 
 .empty-state i {
@@ -279,7 +263,7 @@ body {
   margin-bottom: 0;
 }
 
-/* Organización de notas */
+/* Notes Sections */
 .notes-section {
   margin-bottom: 2rem;
 }
@@ -314,10 +298,6 @@ body {
 .note-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-.note-card.important {
-  border-left-color: var(--danger-color);
 }
 
 .note-card-header {
@@ -364,6 +344,10 @@ body {
   background-color: var(--primary-color);
 }
 
+.note-label.no-label {
+  background-color: #94a3b8;
+}
+
 .label-filter {
   display: flex;
   gap: 0.5rem;
@@ -383,7 +367,7 @@ body {
   border-color: var(--primary-color);
 }
 
-/* Modal Customization */
+/* Modal Styles */
 .modal-content {
   border-radius: var(--border-radius);
   border: none;
@@ -411,7 +395,7 @@ body {
   padding: 1rem 1.25rem;
 }
 
-/* Sección de etiquetas en el sidebar */
+/* Label List in Sidebar */
 .sidebar-section {
   margin: 1.5rem 0;
 }
@@ -432,6 +416,8 @@ body {
   list-style: none;
   padding: 0;
   margin: 0.5rem 0 0 0;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .label-list li a {
@@ -444,6 +430,7 @@ body {
   text-decoration: none;
   transition: all 0.2s ease;
   font-size: 0.95rem;
+  position: relative;
 }
 
 .label-list li a:hover {
@@ -457,7 +444,14 @@ body {
   border-radius: 50%;
 }
 
-/* Paleta de colores */
+.label-actions {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Color Picker */
 .color-palette {
   display: flex;
   flex-direction: column;
@@ -483,17 +477,7 @@ body {
   transform: scale(1.1);
 }
 
-.color-option.active {
-  border-color: var(--dark-color);
-}
-
-.form-control-color {
-  width: 50px;
-  height: 50px;
-  padding: 2px;
-}
-
-/* Responsive Adjustments */
+/* Responsive Design */
 @media (max-width: 992px) {
   .dashboard-sidebar {
     width: 240px;
@@ -533,7 +517,7 @@ body {
     gap: 1rem;
   }
   
-  .search-box, .filter-dropdown {
+  .search-box {
     width: 100%;
   }
   

@@ -76,6 +76,14 @@ class Task {
         return $stmt->execute();
     }
     
-    // ... otros métodos permanecen igual
+    public function deleteTask($noteId, $userId) {
+        $stmt = $this->pdo->prepare("
+            DELETE FROM notes 
+            WHERE NoteID = :noteId AND UserID = :userId
+        ");
+        $stmt->bindParam(":noteId", $noteId, PDO::PARAM_INT);
+        $stmt->bindParam(":userId", $userId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }
 ?>
